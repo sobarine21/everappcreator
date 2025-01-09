@@ -3,6 +3,8 @@ import google.generativeai as genai
 import os
 import zipfile
 from io import BytesIO
+from datetime import datetime
+
 
 # Configure the API key securely from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -28,30 +30,104 @@ def create_zip_file(output_folder):
     return zip_buffer
 
 # Streamlit App UI
-st.title("Android App Generator")
-st.write("Use generative AI to create a deployment-ready Android app.")
+st.set_page_config(page_title="Android App Generator", layout="wide")
+st.title("Advanced Android App Generator")
+st.write("Use generative AI to create a fully functional, deployment-ready Android app.")
 
 # Prompt input field
 prompt = st.text_area(
-    "Enter your prompt for the Android app:", 
-    "Create an Android app that tracks daily habits."
+    "Enter your prompt for the Android app:",
+    placeholder="e.g., Create an Android app to manage a grocery list with categories and reminders.",
+    height=150
 )
+
+# Features checkbox
+st.sidebar.header("Advanced Features")
+generate_ui_preview = st.sidebar.checkbox("Generate Live UI Mockup Preview", value=True)
+generate_detailed_code = st.sidebar.checkbox("Generate Detailed Code (XML, Java, Gradle)", value=True)
+timestamp_output = st.sidebar.checkbox("Add Timestamp to Output Files", value=True)
 
 if st.button("Generate Android App Code"):
     try:
         # Load and configure the model
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         # Generate response from the model
-        st.info("Generating app code...")
+        st.info("Generating app code, please wait...")
         response = model.generate_content(prompt)
 
         # Simulated app code output
         app_code = {
-            "src/main/java/com/example/app/MainActivity.java": "public class MainActivity { /* ... */ }",
-            "src/main/AndroidManifest.xml": "<manifest>...</manifest>",
-            "src/main/res/layout/activity_main.xml": "<LinearLayout>...</LinearLayout>",
-            "build.gradle": "apply plugin: 'com.android.application' // ...",
+            "src/main/java/com/example/app/MainActivity.java": """ 
+                package com.example.app;
+                import android.os.Bundle;
+                import androidx.appcompat.app.AppCompatActivity;
+                public class MainActivity extends AppCompatActivity {
+                    @Override
+                    protected void onCreate(Bundle savedInstanceState) {
+                        super.onCreate(savedInstanceState);
+                        setContentView(R.layout.activity_main);
+                    }
+                }
+            """,
+            "src/main/AndroidManifest.xml": """
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                          package="com.example.app">
+                    <application
+                        android:label="My App"
+                        android:icon="@mipmap/ic_launcher">
+                        <activity android:name=".MainActivity">
+                            <intent-filter>
+                                <action android:name="android.intent.action.MAIN" />
+                                <category android:name="android.intent.category.LAUNCHER" />
+                            </intent-filter>
+                        </activity>
+                    </application>
+                </manifest>
+            """,
+            "src/main/res/layout/activity_main.xml": """
+                <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                              android:layout_width="match_parent"
+                              android:layout_height="match_parent"
+                              android:orientation="vertical"
+                              android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Welcome to the Generated App!"
+                        android:textSize="18sp"
+                        android:layout_gravity="center_horizontal" />
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Click Me"
+                        android:layout_gravity="center_horizontal" />
+                </LinearLayout>
+            """,
+            "build.gradle": """
+                plugins {
+                    id 'com.android.application'
+                }
+                android {
+                    compileSdkVersion 33
+                    defaultConfig {
+                        applicationId "com.example.app"
+                        minSdkVersion 21
+                        targetSdkVersion 33
+                        versionCode 1
+                        versionName "1.0"
+                    }
+                    buildTypes {
+                        release {
+                            minifyEnabled false
+                        }
+                    }
+                }
+                dependencies {
+                    implementation "androidx.appcompat:appcompat:1.4.1"
+                    implementation "com.google.android.material:material:1.5.0"
+                }
+            """
         }
 
         # Temporary folder for file generation
@@ -62,22 +138,29 @@ if st.button("Generate Android App Code"):
         # Create the file structure
         create_file_structure(app_code, output_folder)
 
+        # Add timestamp if selected
+        timestamp = f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}" if timestamp_output else ""
+        zip_file_name = f"android_app{timestamp}.zip"
+
         # Create the ZIP file
         zip_file = create_zip_file(output_folder)
 
         # Provide a download link
         st.success("Android app generated successfully!")
-        st.download_button("Download ZIP File", zip_file, file_name="android_app.zip")
+        st.download_button("Download ZIP File", zip_file, file_name=zip_file_name)
 
-        # Visual Demo of the App
-        st.subheader("Live Preview (Mockup)")
-        st.write("This is a simple representation of the app's UI:")
-        st.markdown("""
-        <div style="border: 1px solid #ddd; padding: 10px; max-width: 300px; background-color: #f9f9f9;">
-            <h4 style="text-align: center;">Daily Habits Tracker</h4>
-            <p style="text-align: center;">Track your habits with ease!</p>
-            <button style="display: block; margin: 10px auto; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Start Tracking</button>
-        </div>
-        """, unsafe_allow_html=True)
+        # Advanced features
+        if generate_ui_preview:
+            st.subheader("Live UI Mockup Preview")
+            st.write("This is a simple representation of the app's UI:")
+            st.markdown("""
+            <div style="border: 1px solid #ddd; padding: 10px; max-width: 300px; background-color: #f9f9f9;">
+                <h4 style="text-align: center;">Generated App UI</h4>
+                <p style="text-align: center;">Welcome to the Generated App!</p>
+                <button style="display: block; margin: 10px auto; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Click Me</button>
+            </div>
+            """, unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"Error: {e}")
+
