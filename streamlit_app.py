@@ -9,9 +9,6 @@ genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Helper function to write files
 def create_file_structure(app_code, output_folder):
-    """
-    Creates the directory structure and files from the generated app code.
-    """
     for file_name, file_content in app_code.items():
         file_path = os.path.join(output_folder, file_name)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -20,9 +17,6 @@ def create_file_structure(app_code, output_folder):
 
 # Helper function to create a zip file
 def create_zip_file(output_folder):
-    """
-    Creates a ZIP file from the output folder and returns it as a BytesIO object.
-    """
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(output_folder):
@@ -43,7 +37,6 @@ prompt = st.text_area(
     "Create an Android app that tracks daily habits."
 )
 
-# Button to generate response
 if st.button("Generate Android App Code"):
     try:
         # Load and configure the model
@@ -53,8 +46,7 @@ if st.button("Generate Android App Code"):
         st.info("Generating app code...")
         response = model.generate_content(prompt)
 
-        # Example output structure (simulated for demonstration)
-        # Modify this parsing logic based on actual response structure
+        # Simulated app code output
         app_code = {
             "src/main/java/com/example/app/MainActivity.java": "public class MainActivity { /* ... */ }",
             "src/main/AndroidManifest.xml": "<manifest>...</manifest>",
@@ -68,15 +60,24 @@ if st.button("Generate Android App Code"):
             os.makedirs(output_folder)
 
         # Create the file structure
-        st.info("Creating files...")
         create_file_structure(app_code, output_folder)
 
         # Create the ZIP file
-        st.info("Packaging files into ZIP...")
         zip_file = create_zip_file(output_folder)
 
         # Provide a download link
         st.success("Android app generated successfully!")
         st.download_button("Download ZIP File", zip_file, file_name="android_app.zip")
+
+        # Visual Demo of the App
+        st.subheader("Live Preview (Mockup)")
+        st.write("This is a simple representation of the app's UI:")
+        st.markdown("""
+        <div style="border: 1px solid #ddd; padding: 10px; max-width: 300px; background-color: #f9f9f9;">
+            <h4 style="text-align: center;">Daily Habits Tracker</h4>
+            <p style="text-align: center;">Track your habits with ease!</p>
+            <button style="display: block; margin: 10px auto; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Start Tracking</button>
+        </div>
+        """, unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Error: {e}")
