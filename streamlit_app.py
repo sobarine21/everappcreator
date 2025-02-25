@@ -4,7 +4,7 @@ import os
 import zipfile
 from io import BytesIO
 from datetime import datetime
-import subprocess
+
 
 # Configure the API key securely from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -28,26 +28,6 @@ def create_zip_file(output_folder):
                 zipf.write(file_path, arcname)
     zip_buffer.seek(0)
     return zip_buffer
-
-# Helper function to build APK
-def build_apk(output_folder):
-    try:
-        # Run the Gradle build command
-        result = subprocess.run(["./gradlew", "assembleDebug"], cwd=output_folder, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            st.error(f"APK build failed: {result.stderr}")
-            return None
-
-        apk_path = os.path.join(output_folder, "app/build/outputs/apk/debug/app-debug.apk")
-        if os.path.exists(apk_path):
-            return apk_path
-        else:
-            st.error("APK file not found after build.")
-            return None
-    except Exception as e:
-        st.error(f"Error during APK build: {e}")
-        return None
 
 # Streamlit App UI
 st.set_page_config(page_title="Android App Generator", layout="wide")
@@ -78,7 +58,7 @@ if st.button("Generate Android App Code"):
 
         # Simulated app code output
         app_code = {
-            "app/src/main/java/com/example/app/MainActivity.java": """ 
+            "src/main/java/com/example/app/MainActivity.java": """ 
                 package com.example.app;
                 import android.os.Bundle;
                 import androidx.appcompat.app.AppCompatActivity;
@@ -90,7 +70,7 @@ if st.button("Generate Android App Code"):
                     }
                 }
             """,
-            "app/src/main/AndroidManifest.xml": """
+            "src/main/AndroidManifest.xml": """
                 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                           package="com.example.app">
                     <application
@@ -105,7 +85,7 @@ if st.button("Generate Android App Code"):
                     </application>
                 </manifest>
             """,
-            "app/src/main/res/layout/activity_main.xml": """
+            "src/main/res/layout/activity_main.xml": """
                 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                               android:layout_width="match_parent"
                               android:layout_height="match_parent"
@@ -124,7 +104,7 @@ if st.button("Generate Android App Code"):
                         android:layout_gravity="center_horizontal" />
                 </LinearLayout>
             """,
-            "app/build.gradle": """
+            "build.gradle": """
                 plugins {
                     id 'com.android.application'
                 }
@@ -146,27 +126,6 @@ if st.button("Generate Android App Code"):
                 dependencies {
                     implementation "androidx.appcompat:appcompat:1.4.1"
                     implementation "com.google.android.material:material:1.5.0"
-                }
-            """,
-            "settings.gradle": """
-                include ':app'
-            """,
-            "build.gradle": """
-                // Top-level build file where you can add configuration options common to all sub-projects/modules.
-                buildscript {
-                    repositories {
-                        google()
-                        mavenCentral()
-                    }
-                    dependencies {
-                        classpath "com.android.tools.build:gradle:7.0.4"
-                    }
-                }
-                allprojects {
-                    repositories {
-                        google()
-                        mavenCentral()
-                    }
                 }
             """
         }
@@ -190,13 +149,6 @@ if st.button("Generate Android App Code"):
         st.success("Android app generated successfully!")
         st.download_button("Download ZIP File", zip_file, file_name=zip_file_name)
 
-        # Build APK
-        st.info("Building APK file, please wait...")
-        apk_path = build_apk(output_folder)
-        if apk_path:
-            with open(apk_path, "rb") as apk_file:
-                st.download_button("Download APK File", apk_file, file_name="app-debug.apk")
-
         # Advanced features
         if generate_ui_preview:
             st.subheader("Live UI Mockup Preview")
@@ -211,3 +163,4 @@ if st.button("Generate Android App Code"):
 
     except Exception as e:
         st.error(f"Error: {e}")
+
